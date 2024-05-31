@@ -7,6 +7,22 @@
 obs = obslua
 script_path = ""
 version = "2.0.0"
+OS_TYPE = nil
+
+-- Function to detect the OS and if linux, detect flatpak usage
+function detect_os()
+    if package.config:sub(1,1) == '\\' then
+        return "win"
+    elseif package.config:sub(1,1) == '/' then
+        if os.execute('uname -s | grep Darwin > /dev/null') then
+            return "mac"
+        elseif os.execute('flatpak --version > /dev/null')
+            return "linux-flatpak"
+        else
+            return "linux"
+        end
+    end
+end
 
 -- Function to send a notification to the desktop
 -- OS: Windows, macOS, Linux
@@ -15,20 +31,17 @@ version = "2.0.0"
 -- Linux: Requires notify-send
 function send_notification(title, message)
     -- Check if the OS is Windows, macOS or Linux and send the notification accordingly
-    if package.config:sub(1,1) == '\\' then
+    if OS_TYPE == "win" then
         -- Windows
         local file = io.open(script_path .. 'notifications.txt', 'w')
         file:write(title .. ',' .. message .. '\n')
         file:close()
-    elseif package.config:sub(1,1) == '/' then
-        -- macOS or Linux
-        if os.execute('uname -s | grep Darwin > /dev/null') then
-            -- macOS
-            os.execute('osascript -e \'display notification "' .. message .. '" with title "' .. title .. '"\'')
-        else
-            -- Linux
-            os.execute('notify-send "' .. title .. '" "' .. message .. '"')
-        end
+    elseif OS_TYPE == "mac" then
+        os.execute('osascript -e \'display notification "' .. message .. '" with title "' .. title .. '"\'')
+    elseif OS_TYPE == "linux-flatpak" then
+        os.execute('flatpak --host notify-send "' .. title .. '" "' .. message .. '"')
+    elseif OS_TYPE == "linux" then
+        os.execute('notify-send "' .. title .. '" "' .. message .. '"')
     end
 end
 
@@ -75,6 +88,7 @@ end
 -- OBS function when the script gets loaded
 function script_load(settings)
     print("Loading script...")
+    OS_TYPE = detect_os()
     -- Check if the OS is Windows and, if so, launch the PowerShell script with the setup argument
     if package.config:sub(1,1) == '\\' then
         -- Windows
