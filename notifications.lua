@@ -16,7 +16,7 @@ function detect_os()
     elseif package.config:sub(1,1) == '/' then
         if os.execute('uname -s | grep Darwin > /dev/null') then
             return "mac"
-        elseif os.execute('flatpak --version > /dev/null')
+        elseif os.execute('flatpak --version > /dev/null') then
             return "linux-flatpak"
         else
             return "linux"
