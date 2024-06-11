@@ -14,9 +14,9 @@ function detect_os()
     if package.config:sub(1,1) == '\\' then
         return "win"
     elseif package.config:sub(1,1) == '/' then
-        if os.execute('uname -s | grep Darwin > /dev/null') then
+        if os.execute('uname -s | grep Darwin > /dev/null') == 0 then
             return "mac"
-        elseif os.execute('flatpak --version > /dev/null') then
+        elseif os.execute('flatpak-spawn --help > /dev/null') == 0 then
             return "linux-flatpak"
         else
             return "linux"
@@ -39,7 +39,7 @@ function send_notification(title, message)
     elseif OS_TYPE == "mac" then
         os.execute('osascript -e \'display notification "' .. message .. '" with title "' .. title .. '"\'')
     elseif OS_TYPE == "linux-flatpak" then
-        os.execute('flatpak --host notify-send "' .. title .. '" "' .. message .. '"')
+        os.execute('flatpak-spawn --host notify-send "' .. title .. '" "' .. message .. '"')
     elseif OS_TYPE == "linux" then
         os.execute('notify-send "' .. title .. '" "' .. message .. '"')
     end
@@ -100,7 +100,8 @@ function script_load(settings)
         os.execute('start /min conhost powershell -ExecutionPolicy Bypass -File "' .. script_path .. 'notifications.ps1" setup')
 
     end
-    print("Script loaded")
+    print("Script loaded. OS: " .. OS_TYPE)
+    -- send_notification("test", "debug")
     -- Add the event callback function to the OBS events
     obs.obs_frontend_add_event_callback(on_event)
 end
